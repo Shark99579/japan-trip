@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="notranslate" translate="no">
 <head>
   <meta charset="UTF-8" />
+  <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -100,12 +101,6 @@
       0% { transform: translateY(-10vh) rotate(0deg); opacity: 0.85; }
       100% { transform: translateY(105vh) rotate(360deg); opacity: 0.2; }
     }
-
-    /* Ticket notch */
-    .ticket-card {
-      position: relative;
-      border-radius: 18px;
-    }
   </style>
 </head>
 <body class="pb-24">
@@ -160,7 +155,7 @@
   </nav>
 
   <!-- Add/Edit Item Modal -->
-  <div id="modal-backdrop" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4">
+  <div id="modal-backdrop" onclick="if(event.target===this) closeModal()" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4">
     <div id="modal-box" class="bg-cream border-2 border-[#E8DFD1] rounded-3xl w-full max-w-sm p-5 shadow-xl">
       <!-- Modal content injected dynamically -->
     </div>
@@ -186,8 +181,18 @@ const firebaseConfig = {
 
     // Determine Room ID from URL (?id=xxx)
     const urlParams = new URLSearchParams(window.location.search);
-    const roomId = urlParams.get('id') || 'allen_moki_2026';
+    const roomId = urlParams.get('id') || 'allen_moki_2026_v3';
     document.getElementById('room-label').textContent = `房間：${roomId}`;
+
+    // Helper for HTML escaping inside inputs
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
 
     // Default Complete 15-Day Itinerary & App Data
     const DEFAULT_DATA = {
@@ -311,7 +316,7 @@ const firebaseConfig = {
         {
           day: 10, date: "12/25 (五)", region: "洞爺湖・登別", theme: "羊蹄山・洞爺湖・登別地獄谷一日遊",
           weather: "⛅ 雪晴 -5°C ~ 0°C",
-          luggageTip: "今晚是札幌法華俱樂部最後一晚，睡前可先整理大行李箱。",
+          luggageTip: "今晚是札幌法華俱樂部最後一晚，睡前整理好 2 咖大行李箱，明早 10:15 退房搭車！",
           events: [
             { id: "d10-1", time: "08:00 - 18:30", title: "道南大自然專車一日遊", desc: "專車接送探訪北海道南部最經典火山湖泊雪景。", map: "Lake Toya", done: false },
             { id: "d10-2", time: "10:30 - 13:30", title: "遠眺羊蹄山 ＆ 洞爺湖畔漫步", desc: "欣賞蝦夷富士雪山倒影，品嚐 Lake Hill Farm 濃郁冰淇淋。", map: "Lake Hill Farm", done: false },
@@ -320,24 +325,29 @@ const firebaseConfig = {
           ]
         },
         {
-          day: 11, date: "12/26 (六)", region: "札幌 → 函館", theme: "JR 特急北斗號移防 → 直達車站相連飯店",
+          day: 11, date: "12/26 (六)", region: "札幌 → 函館", theme: "10:56 海景北斗號 → 八幡坂日落 → 紅磚倉庫夜燈",
           weather: "❄️ 海風微雪 -3°C ~ 2°C",
-          luggageTip: "JR 函館站下車後走專屬連通道，免出站、免吹冷風直接滑進 JR Inn 函館大廳！",
+          luggageTip: "🔑 乘車與順遊秘訣：劃位選左側海景「C、D 席」，10:40 提早上月台放 29 吋行李箱；抵達函館先搭市電到「末廣町」拍八幡坂，再一路下坡逛紅磚倉庫！",
           events: [
-            { id: "d11-1", time: "14:00 - 17:44", title: "JR 特急北斗號（札幌 → 函館）", desc: "車程約 3 小時 44 分，在溫暖車廂內欣賞內浦灣海雪美景。", map: "Hakodate Station", done: false },
-            { id: "d11-2", time: "18:00", title: "Check-in JR Inn 函館", desc: "與車站直接連通！放置行李並挑選專屬枕頭庫。", map: "JR Inn Hakodate", done: false },
-            { id: "d11-3", time: "19:00", title: "金森紅磚倉庫夜燈 ＆ 幸運小丑漢堡", desc: "漫步港邊紅磚倉庫，必點函館限定中華雞腿堡！", map: "Kanemori Red Brick Warehouse", done: false }
+            { id: "d11-1", time: "08:30 - 10:15", title: "札幌法華俱樂部早餐 ＆ 退房", desc: "享用最後一頓札幌早餐，整理完畢後步行前往 JR 札幌站。", map: "Hotel Hokke Club Sapporo", done: false },
+            { id: "d11-2", time: "10:25 - 10:45", title: "札幌站採買鐵路便當 ＆ 提早登車放行李", desc: "買「弁菜亭海鮮蝦夷賞味」便當與 Sandria 三明治，提早 15 分鐘上月台放好 29 吋行李箱。", map: "Sapporo Station", done: false },
+            { id: "d11-3", time: "10:56 - 14:40", title: "JR 特急北斗 10 號（白晝海景列車）", desc: "鎖定左側 C、D 席！邊吃海鮮便當邊欣賞內浦灣陽光雪海與駒岳火山。", map: "Hakodate Station", done: false },
+            { id: "d11-4", time: "14:45 - 15:15", title: "直通入住 JR Inn 函館", desc: "免出站走專屬連通道直達飯店大廳（15:00 進房放行李、挑枕頭）。", map: "JR Inn Hakodate", done: false },
+            { id: "d11-5", time: "15:30 - 16:30", title: "元町八幡坂 ＆ 教堂群日落漫步", desc: "搭路面電車至「末廣町」站直達坡頂，趁日落前後拍海港雪坡與東正教教堂。", map: "Hachiman-zaka Slope", done: false },
+            { id: "d11-6", time: "16:35 - 18:45", title: "下坡逛金森紅磚倉庫群 ＆ 聖誕光影", desc: "一路下坡輕鬆散步至港邊紅磚倉庫，欣賞點燈倒影與巨型水上聖誕樹。", map: "Kanemori Red Brick Warehouse", done: false },
+            { id: "d11-7", time: "19:00", title: "晚餐：函館限定 幸運小丑漢堡", desc: "步行 1 分鐘至碼頭末廣店，必點招牌中華雞腿堡配起司薯條！", map: "Lucky Pierrot Marina Suehiro", done: false }
           ]
         },
         {
-          day: 12, date: "12/27 (日)", region: "函館", theme: "五稜郭星形雪城 ＆ 函館山百萬夜景",
+          day: 12, date: "12/27 (日)", region: "函館", theme: "五稜郭星形雪城 → 函館山百萬夜景 → 百年壽喜燒",
           weather: "⛅ 多雲時雪 -4°C ~ 1°C",
-          luggageTip: "函館山頂風大極冷，上山看夜景前記得多加一件防風層。",
+          luggageTip: "因前一天已走完元町與紅磚倉庫，今天不需重複繞路！函館山頂風大極冷，傍晚上山前多加防風層。",
           events: [
-            { id: "d12-1", time: "09:30 - 11:30", title: "五稜郭塔俯瞰星形雪城", desc: "登上展望台，俯瞰大雪勾勒出無比工整的星形要塞。", map: "Goryokaku Tower", done: false },
-            { id: "d12-2", time: "13:30 - 15:30", title: "元町西洋建築群 ＆ 八幡坂", desc: "日劇經典名場景，從坡道頂端眺望筆直伸入港口的雪坡。", map: "Hachiman-zaka Slope", done: false },
-            { id: "d12-3", time: "16:30 - 18:15", title: "函館山纜車：世界級百萬夜景", desc: "收服雙弧形海灣構成的璀璨夜景奇蹟。", map: "Mount Hakodate Ropeway", done: false },
-            { id: "d12-4", time: "19:00", title: "晚餐：百年老店 阿佐利（Asari）壽喜燒", desc: "大正時代創業名店，於榻榻米包廂享用頂級黑毛和牛壽喜燒。", map: "Asari Honten Hakodate", done: false }
+            { id: "d12-1", time: "09:00 - 10:00", title: "函館站前早午餐 / 函館塩味拉麵", desc: "悠閒睡飽後品嚐清爽鮮美的函館名物黃金塩味拉麵。", map: "Hakodate Station", done: false },
+            { id: "d12-2", time: "10:30 - 13:30", title: "五稜郭塔俯瞰星形雪城 ＆ 公園雪景漫步", desc: "登上展望台俯瞰大雪勾勒出的工整星形要塞，並走進箱館奉行所雪庭拍照。", map: "Goryokaku Tower", done: false },
+            { id: "d12-3", time: "14:00 - 15:45", title: "大門地區咖啡廳午茶 ＆ 回飯店加穿保暖", desc: "品嚐六花亭五稜郭店或車站周邊手沖咖啡，回飯店添衣準備上山看夜景。", map: "Rokkatei Goryokaku", done: false },
+            { id: "d12-4", time: "16:15 - 18:15", title: "函館山纜車：世界級百萬夜景", desc: "搶在日落藍調與夜幕交替時登頂，收服雙弧形海灣璀璨奇蹟。", map: "Mount Hakodate Ropeway", done: false },
+            { id: "d12-5", time: "19:00", title: "晚餐：百年老店 阿佐利（Asari）壽喜燒", desc: "大正時代創業名店，於榻榻米包廂享用頂級黑毛和牛壽喜燒。", map: "Asari Honten Hakodate", done: false }
           ]
         },
         {
@@ -378,7 +388,7 @@ const firebaseConfig = {
         { id: "t2", title: "高速巴士：名古屋 → 白川鄉 → 高山", date: "11/18 開放搶票", note: "鎖定 08:00 發車「10501便」直達班次", done: true },
         { id: "t3", title: "JR 特急 Hida 10 號（高山 → 名古屋）", date: "11/19 開放搶票", note: "11:33 高山發車 → 14:04 抵達名古屋", done: true },
         { id: "t4", title: "吉卜力公園大散步券 Premium", date: "已確認買到！", note: "12/20 09:00 入園 / 13:00 大倉庫場次", done: true },
-        { id: "t5", title: "JR 特急北斗號（札幌 → 函館）", date: "11/26 台灣時間 09:00 開搶", note: "12/26 14:00 札幌發車 → 17:44 抵達函館", done: false }
+        { id: "t5", title: "JR 特急北斗 10 號（札幌 → 函館）", date: "11/26 已開放搶票", note: "12/26 10:56 札幌發車 → 14:40 抵達函館（劃左側海景 C/D 席）", done: false }
       ],
       expenses: [
         { id: "e1", title: "名古屋公費錢包初始存入（每人 ¥50,000）", amount: 0, currency: "JPY", pool: "public", payer: "憲聰", cat: "公費", date: "12/16" }
@@ -393,7 +403,8 @@ const firebaseConfig = {
         { id: "c7", group: "🧥 雪國洋蔥式穿搭", text: "毛帽（遮耳）、防水觸控手套、圍巾、暖暖包", done: false },
         { id: "c8", group: "🧳 行李與 3C 備忘", text: "Day 3 早上把 2 咖大行李箱寄放利索爾，只背過夜包去高山", done: false },
         { id: "c9", group: "🧳 行李與 3C 備忘", text: "Day 6 早上把 2 咖大行李箱寄放「名鐵金山站」大型置物櫃", done: false },
-        { id: "c10", group: "🧳 行李與 3C 備忘", text: "行動電源（隨身登機勿托運）、保濕乳液與護唇膏", done: false }
+        { id: "c10", group: "🧳 行李與 3C 備忘", text: "Day 11 提早 15 分鐘上札幌站月台，將 29 吋行李箱放入北斗號玄關行李架", done: false },
+        { id: "c11", group: "🧳 行李與 3C 備忘", text: "行動電源（隨身登機勿托運）、保濕乳液與護唇膏", done: false }
       ]
     };
 
@@ -428,7 +439,6 @@ const firebaseConfig = {
 
         onValue(tripRef, (snapshot) => {
           const val = snapshot.val();
-          // Strict check: only overwrite if valid itinerary array exists in Firebase
           if (val && Array.isArray(val.itinerary) && val.itinerary.length > 0) {
             state = {
               ...DEFAULT_DATA,
@@ -441,7 +451,6 @@ const firebaseConfig = {
             updateSyncBadge("☁️ 雲端已同步", "bg-matchaLight text-emerald-700 border-emerald-200");
             renderApp();
           } else {
-            // Cloud is empty or missing itinerary -> push our full default itinerary to Firebase!
             saveState();
             updateSyncBadge("☁️ 雲端已初始化", "bg-matchaLight text-emerald-700 border-emerald-200");
           }
@@ -515,10 +524,132 @@ const firebaseConfig = {
       }, 50);
     };
 
+    // Open Edit Day Header Card (Theme, Weather & Luggage Tip)
+    window.openEditDayHeaderModal = function(dayIdx) {
+      const day = state.itinerary[dayIdx];
+      if (!day) return;
+
+      const modal = document.getElementById('modal-backdrop');
+      const box = document.getElementById('modal-box');
+      box.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-black text-lg text-cocoa">🌤️ 編輯 Day ${day.day} 摘要與提醒</h3>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-honeyLight text-amber-800">即時同步</span>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">當日主題標語</label>
+            <input id="edit-day-theme" type="text" value="${escapeHtml(day.theme)}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">🌤️ 預估天氣</label>
+            <input id="edit-day-weather" type="text" value="${escapeHtml(day.weather)}" placeholder="例如：❄️ 小雪 -4°C ~ 1°C" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">🧳 行李 / 重要提醒</label>
+            <textarea id="edit-day-luggage" rows="3" placeholder="輸入行李寄放或注意事項..." class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">${escapeHtml(day.luggageTip)}</textarea>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+          <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-paper text-cocoa font-bold">取消</button>
+          <button onclick="saveEditedDayHeader(${dayIdx})" class="flex-1 py-2.5 rounded-xl bg-strawberry text-white font-bold shadow-stickerSm">儲存修改</button>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.saveEditedDayHeader = function(dayIdx) {
+      const theme = document.getElementById('edit-day-theme').value.trim();
+      const weather = document.getElementById('edit-day-weather').value.trim();
+      const luggageTip = document.getElementById('edit-day-luggage').value.trim();
+
+      const targetDay = state.itinerary[dayIdx];
+      if (theme) targetDay.theme = theme;
+      targetDay.weather = weather || "☀️ 晴時多雲";
+      targetDay.luggageTip = luggageTip || "輕裝愉快出發！";
+
+      saveState();
+      closeModal();
+      renderApp();
+    };
+
     // Toggle Event Done
     window.toggleEventDone = function(dayIdx, eventIdx) {
       state.itinerary[dayIdx].events[eventIdx].done = !state.itinerary[dayIdx].events[eventIdx].done;
       saveState();
+      renderApp();
+    };
+
+    // Move Event Up or Down
+    window.moveEvent = function(dayIdx, eventIdx, direction) {
+      const events = state.itinerary[dayIdx].events;
+      const targetIdx = eventIdx + direction;
+      if (targetIdx < 0 || targetIdx >= events.length) return;
+
+      const temp = events[eventIdx];
+      events[eventIdx] = events[targetIdx];
+      events[targetIdx] = temp;
+
+      saveState();
+      renderApp();
+    };
+
+    // Open Edit Existing Event Modal
+    window.openEditEventModal = function(dayIdx, eventIdx) {
+      const day = state.itinerary[dayIdx];
+      const ev = day.events[eventIdx];
+      if (!ev) return;
+
+      const modal = document.getElementById('modal-backdrop');
+      const box = document.getElementById('modal-box');
+      box.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-black text-lg text-cocoa">✏️ 編輯 Day ${day.day} 行程</h3>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-honeyLight text-amber-800">即時同步</span>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">時間</label>
+            <input id="edit-ev-time" type="text" value="${escapeHtml(ev.time)}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">行程標題</label>
+            <input id="edit-ev-title" type="text" value="${escapeHtml(ev.title)}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">備註說明</label>
+            <textarea id="edit-ev-desc" rows="3" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">${escapeHtml(ev.desc)}</textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">Google Maps 搜尋關鍵字（選填）</label>
+            <input id="edit-ev-map" type="text" value="${escapeHtml(ev.map || '')}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+          <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-paper text-cocoa font-bold">取消</button>
+          <button onclick="saveEditedEvent(${dayIdx}, ${eventIdx})" class="flex-1 py-2.5 rounded-xl bg-strawberry text-white font-bold shadow-stickerSm">儲存修改</button>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.saveEditedEvent = function(dayIdx, eventIdx) {
+      const time = document.getElementById('edit-ev-time').value.trim() || "彈性時間";
+      const title = document.getElementById('edit-ev-title').value.trim();
+      const desc = document.getElementById('edit-ev-desc').value.trim();
+      const map = document.getElementById('edit-ev-map').value.trim();
+      if (!title) return alert("行程標題不能留空喔！");
+
+      const target = state.itinerary[dayIdx].events[eventIdx];
+      target.time = time;
+      target.title = title;
+      target.desc = desc;
+      target.map = map;
+
+      saveState();
+      closeModal();
       renderApp();
     };
 
@@ -528,7 +659,7 @@ const firebaseConfig = {
       const modal = document.getElementById('modal-backdrop');
       const box = document.getElementById('modal-box');
       box.innerHTML = `
-        <h3 class="font-black text-lg text-cocoa mb-3">✏️ 新增 Day ${day.day} 行程</h3>
+        <h3 class="font-black text-lg text-cocoa mb-3">➕ 新增 Day ${day.day} 行程</h3>
         <div class="space-y-3 text-sm">
           <div>
             <label class="block text-xs font-bold text-cocoaLight mb-1">時間</label>
@@ -586,11 +717,166 @@ const firebaseConfig = {
       modal.classList.remove('flex');
     };
 
-    // Toggle Ticket Done
+    // Open Edit Public Fund & JPY Rate Modal
+    window.openFundSettingsModal = function() {
+      const currentTotal = state.publicFundTotal || 100000;
+      const currentRate = state.jpyRate || 0.215;
+
+      const modal = document.getElementById('modal-backdrop');
+      const box = document.getElementById('modal-box');
+      box.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-black text-lg text-cocoa">🐷 設定公費總額與匯率</h3>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-honeyLight text-amber-800">即時重算</span>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">公費小豬總金額（日幣 JPY）</label>
+            <input id="edit-public-total" type="number" step="1000" value="${currentTotal}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white font-black text-cocoa focus:outline-none focus:border-strawberry">
+            <p class="text-[11px] text-cocoaLight mt-1">例如：每人放 ¥50,000，兩人合計為 100000</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">日幣換算台幣匯率（1 JPY = ? TWD）</label>
+            <input id="edit-jpy-rate" type="number" step="0.0001" value="${currentRate}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white font-black text-cocoa focus:outline-none focus:border-strawberry">
+            <p class="text-[11px] text-cocoaLight mt-1">例如：0.215 代表 ¥1,000 約為 NT$ 215</p>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+          <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-paper text-cocoa font-bold">取消</button>
+          <button onclick="saveFundSettings()" class="flex-1 py-2.5 rounded-xl bg-strawberry text-white font-bold shadow-stickerSm">儲存設定</button>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.saveFundSettings = function() {
+      const newTotal = parseFloat(document.getElementById('edit-public-total').value);
+      const newRate = parseFloat(document.getElementById('edit-jpy-rate').value);
+
+      if (isNaN(newTotal) || newTotal < 0) {
+        return alert("請輸入正確的公費總金額！");
+      }
+      if (isNaN(newRate) || newRate <= 0 || newRate > 10) {
+        return alert("請輸入正確的日幣匯率（例如 0.215）！");
+      }
+
+      state.publicFundTotal = newTotal;
+      state.jpyRate = newRate;
+
+      saveState();
+      closeModal();
+      renderApp();
+    };
+
+    // Ticket Functions: Toggle, Add, Edit, Delete
     window.toggleTicket = function(idx) {
       state.tickets[idx].done = !state.tickets[idx].done;
       saveState();
       renderApp();
+    };
+
+    window.openAddTicketModal = function() {
+      const modal = document.getElementById('modal-backdrop');
+      const box = document.getElementById('modal-box');
+      box.innerHTML = `
+        <h3 class="font-black text-lg text-cocoa mb-3">🎟️ 新增交通 / 門票搶票項目</h3>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">票券 / 預約名稱</label>
+            <input id="new-ticket-title" type="text" placeholder="例如：函館山纜車往復乘車券" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">搶票日期 / 目前狀態</label>
+            <input id="new-ticket-date" type="text" placeholder="例如：已確認買到！ / 12/10 開放預購" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">備註說明（訂位代號 / 座位 / 提醒）</label>
+            <textarea id="new-ticket-note" rows="2" placeholder="輸入訂位代號、座位號碼或注意事項..." class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry"></textarea>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+          <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-paper text-cocoa font-bold">取消</button>
+          <button onclick="saveNewTicket()" class="flex-1 py-2.5 rounded-xl bg-strawberry text-white font-bold shadow-stickerSm">新增票券</button>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.saveNewTicket = function() {
+      const title = document.getElementById('new-ticket-title').value.trim();
+      const date = document.getElementById('new-ticket-date').value.trim() || "待確認";
+      const note = document.getElementById('new-ticket-note').value.trim();
+      if (!title) return alert("請輸入票券名稱喔！");
+
+      state.tickets.push({
+        id: 't-' + Date.now(),
+        title,
+        date,
+        note,
+        done: false
+      });
+      saveState();
+      closeModal();
+      renderApp();
+    };
+
+    window.openEditTicketModal = function(idx) {
+      const t = state.tickets[idx];
+      if (!t) return;
+
+      const modal = document.getElementById('modal-backdrop');
+      const box = document.getElementById('modal-box');
+      box.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-black text-lg text-cocoa">✏️ 編輯票券資訊</h3>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-honeyLight text-amber-800">即時同步</span>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">票券 / 預約名稱</label>
+            <input id="edit-ticket-title" type="text" value="${escapeHtml(t.title)}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">搶票日期 / 目前狀態</label>
+            <input id="edit-ticket-date" type="text" value="${escapeHtml(t.date)}" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-cocoaLight mb-1">備註說明（訂位代號 / 座位 / 提醒）</label>
+            <textarea id="edit-ticket-note" rows="3" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white focus:outline-none focus:border-strawberry">${escapeHtml(t.note)}</textarea>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-5">
+          <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-paper text-cocoa font-bold">取消</button>
+          <button onclick="saveEditedTicket(${idx})" class="flex-1 py-2.5 rounded-xl bg-strawberry text-white font-bold shadow-stickerSm">儲存修改</button>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.saveEditedTicket = function(idx) {
+      const title = document.getElementById('edit-ticket-title').value.trim();
+      const date = document.getElementById('edit-ticket-date').value.trim() || "待確認";
+      const note = document.getElementById('edit-ticket-note').value.trim();
+      if (!title) return alert("票券名稱不能留空喔！");
+
+      state.tickets[idx].title = title;
+      state.tickets[idx].date = date;
+      state.tickets[idx].note = note;
+
+      saveState();
+      closeModal();
+      renderApp();
+    };
+
+    window.deleteTicket = function(idx) {
+      if (confirm("確定要刪除這筆票券項目嗎？")) {
+        state.tickets.splice(idx, 1);
+        saveState();
+        renderApp();
+      }
     };
 
     // Toggle Checklist Done
@@ -674,24 +960,42 @@ const firebaseConfig = {
         `;
       }).join('');
 
+      const totalEvents = currentDay.events.length;
       const eventsHtml = currentDay.events.map((ev, eIdx) => `
         <div class="relative pl-6 pb-5 last:pb-1 group">
           <!-- Timeline Line -->
           <div class="absolute left-[9px] top-3 bottom-0 w-0.5 bg-[#E8DFD1] group-last:hidden"></div>
           <!-- Heart Check Button -->
-          <button onclick="toggleEventDone(${dayIdx}, ${eIdx})"
+          <button onclick="event.stopPropagation(); toggleEventDone(${dayIdx}, ${eIdx})"
             class="absolute left-0 top-1 w-5 h-5 rounded-full flex items-center justify-center text-xs transition-transform active:scale-125 ${
               ev.done ? 'bg-strawberry text-white shadow-stickerSm' : 'bg-white border-2 border-strawberry text-transparent'
             }">
             ♥
           </button>
           
-          <div class="bg-white border-2 ${ev.done ? 'border-emerald-200 bg-emerald-50/30' : 'border-[#E8DFD1]'} rounded-2xl p-3.5 shadow-stickerSm transition-all">
-            <div class="flex items-center justify-between gap-2 mb-1">
-              <span class="text-[11px] font-black px-2 py-0.5 rounded-lg bg-babyblueLight text-sky-700">
-                ⏰ ${ev.time}
-              </span>
-              <div class="flex items-center gap-1.5">
+          <!-- Clickable Card for Direct Editing -->
+          <div onclick="openEditEventModal(${dayIdx}, ${eIdx})"
+            class="cursor-pointer bg-white border-2 ${ev.done ? 'border-emerald-200 bg-emerald-50/30' : 'border-[#E8DFD1] hover:border-strawberry/70'} rounded-2xl p-3.5 shadow-stickerSm transition-all active:scale-[0.99]">
+            <div class="flex items-center justify-between gap-1.5 mb-1">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[11px] font-black px-2 py-0.5 rounded-lg bg-babyblueLight text-sky-700 shrink-0">
+                  ⏰ ${ev.time}
+                </span>
+                <span class="text-[10px] text-cocoaLight/70 font-medium truncate">✏️ 編輯</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+                ${eIdx > 0 ? `
+                  <button onclick="moveEvent(${dayIdx}, ${eIdx}, -1)" title="往上移"
+                    class="w-6 h-6 rounded-lg bg-paper hover:bg-honeyLight text-cocoa font-black text-xs flex items-center justify-center transition active:scale-90">
+                    ↑
+                  </button>
+                ` : ''}
+                ${eIdx < totalEvents - 1 ? `
+                  <button onclick="moveEvent(${dayIdx}, ${eIdx}, 1)" title="往下移"
+                    class="w-6 h-6 rounded-lg bg-paper hover:bg-honeyLight text-cocoa font-black text-xs flex items-center justify-center transition active:scale-90">
+                    ↓
+                  </button>
+                ` : ''}
                 ${ev.map ? `
                   <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.map)}" target="_blank"
                     class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-paper text-cocoa hover:bg-honeyLight transition">
@@ -713,24 +1017,28 @@ const firebaseConfig = {
           ${dayPillsHtml}
         </div>
 
-        <!-- Day Header Card -->
-        <div class="washi-tape bg-white border-2 border-[#E8DFD1] rounded-3xl p-4 mt-2 mb-5 shadow-sticker">
+        <!-- Day Header Card (Clickable to Edit Weather & Luggage Tip) -->
+        <div onclick="openEditDayHeaderModal(${dayIdx})"
+          class="cursor-pointer washi-tape bg-white border-2 border-[#E8DFD1] hover:border-strawberry/70 rounded-3xl p-4 mt-2 mb-5 shadow-sticker transition-all active:scale-[0.99]">
           <div class="flex items-center justify-between gap-2 mb-2">
             <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${phaseColor}">
               ${phaseTag}
             </span>
-            <span class="text-xs font-bold text-cocoaLight">${currentDay.region}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-cocoaLight">${currentDay.region}</span>
+              <span class="text-[10px] font-bold text-rose-500 bg-strawberryLight px-2 py-0.5 rounded-full">✏️ 編輯資訊</span>
+            </div>
           </div>
           <h2 class="font-black text-lg text-cocoa leading-snug">Day ${currentDay.day}｜${currentDay.date}</h2>
           <p class="text-sm font-bold text-rose-500 mt-0.5">${currentDay.theme}</p>
           
           <div class="mt-3 pt-3 border-t border-dashed border-[#E8DFD1] space-y-1.5 text-xs">
-            <div class="flex items-center gap-1.5 text-sky-700 font-bold">
-              <span>🌤️ 預估天氣：</span><span>${currentDay.weather}</span>
+            <div class="flex items-center justify-between gap-1.5 text-sky-700 font-bold">
+              <div><span>🌤️ 預估天氣：</span><span>${currentDay.weather}</span></div>
             </div>
             <div class="flex items-start gap-1.5 text-amber-800 bg-honeyLight/70 p-2 rounded-xl">
               <span class="shrink-0">🧳</span>
-              <span class="font-medium leading-relaxed">${currentDay.luggageTip}</span>
+              <span class="font-medium leading-relaxed flex-1">${currentDay.luggageTip}</span>
             </div>
           </div>
         </div>
@@ -751,16 +1059,22 @@ const firebaseConfig = {
     // Render Booking & Ticket View
     function renderBooking() {
       const ticketsHtml = state.tickets.map((t, idx) => `
-        <div onclick="toggleTicket(${idx})" class="cursor-pointer bg-white border-2 ${t.done ? 'border-emerald-300 bg-matchaLight/30' : 'border-[#E8DFD1]'} rounded-2xl p-3.5 shadow-stickerSm flex items-start gap-3 transition">
-          <div class="w-6 h-6 rounded-xl flex items-center justify-center text-sm font-black shrink-0 mt-0.5 ${t.done ? 'bg-emerald-500 text-white' : 'bg-paper text-cocoaLight border border-[#E8DFD1]'}">
+        <div onclick="openEditTicketModal(${idx})"
+          class="cursor-pointer bg-white border-2 ${t.done ? 'border-emerald-300 bg-matchaLight/30' : 'border-[#E8DFD1] hover:border-strawberry/70'} rounded-2xl p-3.5 shadow-stickerSm flex items-start gap-3 transition active:scale-[0.99]">
+          <button onclick="event.stopPropagation(); toggleTicket(${idx})" title="切換完成狀態"
+            class="w-6 h-6 rounded-xl flex items-center justify-center text-sm font-black shrink-0 mt-0.5 transition active:scale-110 ${t.done ? 'bg-emerald-500 text-white' : 'bg-paper text-cocoaLight border border-[#E8DFD1]'}">
             ${t.done ? '✓' : ''}
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center justify-between gap-2">
+          </button>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
               <h4 class="font-black text-sm text-cocoa ${t.done ? 'line-through opacity-70' : ''}">${t.title}</h4>
+              <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
+                <button onclick="openEditTicketModal(${idx})" class="text-[10px] font-bold text-cocoaLight hover:text-rose-500 px-1.5 py-0.5 rounded bg-paper">✏️ 編輯</button>
+                <button onclick="deleteTicket(${idx})" class="text-xs text-gray-300 hover:text-rose-400 px-1">✕</button>
+              </div>
             </div>
             <span class="inline-block text-[11px] font-bold text-rose-500 bg-strawberryLight px-2 py-0.5 rounded-md mt-1">${t.date}</span>
-            <p class="text-xs text-cocoaLight mt-1">${t.note}</p>
+            ${t.note ? `<p class="text-xs text-cocoaLight mt-1 leading-relaxed">${t.note}</p>` : ''}
           </div>
         </div>
       `).join('');
@@ -825,11 +1139,17 @@ const firebaseConfig = {
             </div>
           </div>
 
-          <!-- Ticket Checklist -->
+          <!-- Ticket Checklist (With Add & Edit) -->
           <div class="bg-white border-2 border-[#E8DFD1] rounded-3xl p-4 shadow-sticker">
-            <h3 class="font-black text-base text-cocoa flex items-center gap-1.5 mb-3">
-              <span>🎟️</span> 交通與門票搶票核對表
-            </h3>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <h3 class="font-black text-base text-cocoa flex items-center gap-1.5">
+                <span>🎟️</span> 交通與門票搶票核對表
+              </h3>
+              <button onclick="openAddTicketModal()"
+                class="text-xs font-black px-2.5 py-1 rounded-xl bg-strawberry text-white shadow-stickerSm active:scale-95 transition">
+                ➕ 新增票券
+              </button>
+            </div>
             <div class="space-y-2.5">
               ${ticketsHtml}
             </div>
@@ -841,7 +1161,7 @@ const firebaseConfig = {
     // Render Expense View
     function renderExpense() {
       const rate = state.jpyRate || 0.215;
-      const publicTotal = state.publicFundTotal || 100000;
+      const publicTotal = state.publicFundTotal !== undefined ? state.publicFundTotal : 100000;
       
       let publicSpentJpy = 0;
       let allenPrivateTwd = 0;
@@ -860,7 +1180,7 @@ const firebaseConfig = {
       });
 
       const remainingJpy = Math.max(0, publicTotal - publicSpentJpy);
-      const pct = Math.min(100, Math.round((remainingJpy / publicTotal) * 100));
+      const pct = publicTotal > 0 ? Math.min(100, Math.round((remainingJpy / publicTotal) * 100)) : 0;
 
       const diffTwd = Math.abs(allenPrivateTwd - mokiPrivateTwd) / 2;
       let settleText = "目前兩人私人代墊完全扯平！🎉";
@@ -900,11 +1220,14 @@ const firebaseConfig = {
 
       return `
         <div class="space-y-4">
-          <!-- Piggy Bank Card -->
+          <!-- Piggy Bank Card (Clickable to Edit Total & Rate) -->
           <div class="washi-tape bg-white border-2 border-[#E8DFD1] rounded-3xl p-4 shadow-sticker">
-            <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center justify-between gap-2 mb-1">
               <span class="text-xs font-black text-amber-800 bg-honeyLight px-2.5 py-0.5 rounded-full">🐷 雙人日幣公費小豬撲滿</span>
-              <span class="text-[11px] font-bold text-cocoaLight">匯率參考: ${rate}</span>
+              <button onclick="openFundSettingsModal()"
+                class="text-[11px] font-bold text-sky-700 bg-babyblueLight hover:bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-200 transition active:scale-95">
+                ✏️ 匯率: ${rate}
+              </button>
             </div>
             <div class="flex items-baseline justify-between mt-2">
               <div>
@@ -912,8 +1235,10 @@ const firebaseConfig = {
                 <div class="text-2xl font-black text-cocoa">¥ ${Math.round(remainingJpy).toLocaleString()}</div>
               </div>
               <div class="text-right">
-                <div class="text-[11px] text-cocoaLight font-bold">已花費</div>
-                <div class="text-sm font-black text-rose-500">¥ ${Math.round(publicSpentJpy).toLocaleString()}</div>
+                <button onclick="openFundSettingsModal()" class="text-[11px] text-cocoaLight hover:text-rose-500 font-bold underline decoration-dashed underline-offset-2">
+                  總額：¥ ${Math.round(publicTotal).toLocaleString()} ✏️
+                </button>
+                <div class="text-sm font-black text-rose-500 mt-0.5">已花：¥ ${Math.round(publicSpentJpy).toLocaleString()}</div>
               </div>
             </div>
             <!-- Progress Bar -->
