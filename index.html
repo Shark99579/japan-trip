@@ -208,6 +208,19 @@ const firebaseConfig = {
       "🧳 行李與 3C 備忘"
     ];
 
+    // Local UI State for Collapsed Checklist Groups (Stored per device)
+    let collapsedGroups = {};
+    try {
+      const savedCollapsed = localStorage.getItem(`trip_collapsed_${roomId}`);
+      if (savedCollapsed) collapsedGroups = JSON.parse(savedCollapsed) || {};
+    } catch (e) {}
+
+    function saveCollapsedState() {
+      try {
+        localStorage.setItem(`trip_collapsed_${roomId}`, JSON.stringify(collapsedGroups));
+      } catch (e) {}
+    }
+
     // Helper for HTML escaping inside inputs
     function escapeHtml(str) {
       if (!str) return '';
@@ -966,6 +979,22 @@ const firebaseConfig = {
       }
     };
 
+    // Checklist Group Collapse / Expand Functions
+    window.toggleChecklistGroup = function(groupName) {
+      collapsedGroups[groupName] = !collapsedGroups[groupName];
+      saveCollapsedState();
+      renderApp();
+    };
+
+    window.toggleAllChecklistGroups = function(shouldCollapse) {
+      const existingGroups = [...new Set(state.checklist.map(item => item.group))];
+      existingGroups.forEach(g => {
+        collapsedGroups[g] = shouldCollapse;
+      });
+      saveCollapsedState();
+      renderApp();
+    };
+
     // Checklist & Souvenir Functions (With Image Upload & URL)
     window.toggleCheck = function(idx) {
       state.checklist[idx].done = !state.checklist[idx].done;
@@ -985,6 +1014,9 @@ const firebaseConfig = {
         url: '',
         img: ''
       });
+      // Automatically expand the group where the new item was added
+      collapsedGroups[group] = false;
+      saveCollapsedState();
       input.value = '';
       saveState();
       renderApp();
@@ -1481,68 +1513,86 @@ const firebaseConfig = {
       `;
     }
 
-    // Render Checklist & Souvenir View (Split by City + Image & URL on each card)
+    // Render Checklist & Souvenir View (Collapsible Groups + City Split + Image & URL)
     function renderChecklist() {
       const existingGroups = [...new Set(state.checklist.map(item => item.group))];
       const groups = [
         ...CHECKLIST_CATEGORIES.filter(g => existingGroups.includes(g)),
         ...existingGroups.filter(g => !CHECKLIST_CATEGORIES.includes(g))
       ];
+
+      const allCollapsed = groups.length > 0 && groups.every(g => !!collapsedGroups[g]);
       
       const groupsHtml = groups.map(g => {
         const items = state.checklist
           .map((item, originalIdx) => ({ ...item, originalIdx }))
           .filter(item => item.group === g);
+        const doneCount = items.filter(i => i.done).length;
+        const isCollapsed = !!collapsedGroups[g];
+        const safeGroupAttr = escapeHtml(g).replace(/'/g, "\\'");
 
         return `
-          <div class="bg-white border-2 border-[#E8DFD1] rounded-3xl p-4 shadow-sticker">
-            <div class="flex items-center justify-between mb-2.5">
-              <h3 class="font-black text-sm text-cocoa">${g}</h3>
-              <span class="text-[10px] font-bold text-cocoaLight">點擊 ✏️ 可加圖/網址</span>
-            </div>
-            <div class="space-y-2.5">
-              ${items.map(item => `
-                <div class="p-2.5 rounded-2xl border-2 ${item.done ? 'border-emerald-200 bg-matchaLight/25' : 'border-[#F0E6D8] bg-cream/60'} transition">
-                  <div class="flex items-start gap-2.5">
-                    <button onclick="toggleCheck(${item.originalIdx})"
-                      class="w-5 h-5 rounded-lg flex items-center justify-center text-xs font-black shrink-0 mt-0.5 transition active:scale-110 ${item.done ? 'bg-strawberry text-white' : 'border-2 border-strawberry bg-white'}">
-                      ${item.done ? '✓' : ''}
-                    </button>
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-start justify-between gap-2">
-                        <span onclick="toggleCheck(${item.originalIdx})" class="cursor-pointer text-xs font-bold leading-relaxed ${item.done ? 'line-through text-cocoaLight' : 'text-cocoa'}">${item.text}</span>
-                        <div class="flex items-center gap-1 shrink-0">
-                          <button onclick="openEditChecklistModal(${item.originalIdx})" title="新增/編輯圖片與網址"
-                            class="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-paper text-cocoa hover:bg-honeyLight transition">
-                            ✏️
-                          </button>
-                          <button onclick="deleteChecklistItem(${item.originalIdx})" title="刪除"
-                            class="text-xs text-gray-300 hover:text-rose-400 px-1">
-                            ✕
-                          </button>
-                        </div>
-                      </div>
+          <div class="bg-white border-2 border-[#E8DFD1] rounded-3xl p-4 shadow-sticker transition-all">
+            <button type="button" onclick="toggleChecklistGroup('${safeGroupAttr}')"
+              class="w-full flex items-center justify-between gap-2 text-left active:opacity-75 transition">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-6 h-6 rounded-xl bg-paper text-cocoa font-black text-xs flex items-center justify-center shrink-0">
+                  ${isCollapsed ? '▸' : '▾'}
+                </span>
+                <h3 class="font-black text-sm text-cocoa truncate">${g}</h3>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-[11px] font-black px-2 py-0.5 rounded-full ${doneCount === items.length && items.length > 0 ? 'bg-matchaLight text-emerald-700' : 'bg-paper text-cocoaLight'}">
+                  ${doneCount}/${items.length}
+                </span>
+              </div>
+            </button>
 
-                      ${(item.img || item.url) ? `
-                        <div class="mt-2 flex items-center gap-2.5 flex-wrap">
-                          ${item.img ? `
-                            <img src="${escapeHtml(item.img)}" alt="商品圖片"
-                              onclick="openLightbox('${escapeHtml(item.img)}', '${escapeHtml(item.text)}')"
-                              class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-stickerSm cursor-zoom-in bg-white" />
-                          ` : ''}
-                          ${item.url ? `
-                            <a href="${escapeHtml(normalizeUrl(item.url))}" target="_blank" rel="noopener noreferrer"
-                              class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-babyblueLight text-sky-700 border border-sky-200 hover:bg-sky-100 transition">
-                              🔗 開啟參考網址
-                            </a>
-                          ` : ''}
+            ${!isCollapsed ? `
+              <div class="space-y-2.5 mt-3 pt-3 border-t border-dashed border-[#E8DFD1]">
+                ${items.map(item => `
+                  <div class="p-2.5 rounded-2xl border-2 ${item.done ? 'border-emerald-200 bg-matchaLight/25' : 'border-[#F0E6D8] bg-cream/60'} transition">
+                    <div class="flex items-start gap-2.5">
+                      <button onclick="toggleCheck(${item.originalIdx})"
+                        class="w-5 h-5 rounded-lg flex items-center justify-center text-xs font-black shrink-0 mt-0.5 transition active:scale-110 ${item.done ? 'bg-strawberry text-white' : 'border-2 border-strawberry bg-white'}">
+                        ${item.done ? '✓' : ''}
+                      </button>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                          <span onclick="toggleCheck(${item.originalIdx})" class="cursor-pointer text-xs font-bold leading-relaxed ${item.done ? 'line-through text-cocoaLight' : 'text-cocoa'}">${item.text}</span>
+                          <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="openEditChecklistModal(${item.originalIdx})" title="新增/編輯圖片與網址"
+                              class="text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-paper text-cocoa hover:bg-honeyLight transition">
+                              ✏️
+                            </button>
+                            <button onclick="deleteChecklistItem(${item.originalIdx})" title="刪除"
+                              class="text-xs text-gray-300 hover:text-rose-400 px-1">
+                              ✕
+                            </button>
+                          </div>
                         </div>
-                      ` : ''}
+
+                        ${(item.img || item.url) ? `
+                          <div class="mt-2 flex items-center gap-2.5 flex-wrap">
+                            ${item.img ? `
+                              <img src="${escapeHtml(item.img)}" alt="商品圖片"
+                                onclick="openLightbox('${escapeHtml(item.img)}', '${escapeHtml(item.text)}')"
+                                class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-stickerSm cursor-zoom-in bg-white" />
+                            ` : ''}
+                            ${item.url ? `
+                              <a href="${escapeHtml(normalizeUrl(item.url))}" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-babyblueLight text-sky-700 border border-sky-200 hover:bg-sky-100 transition">
+                                🔗 開啟參考網址
+                              </a>
+                            ` : ''}
+                          </div>
+                        ` : ''}
+                      </div>
                     </div>
                   </div>
-                </div>
-              `).join('')}
-            </div>
+                `).join('')}
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
@@ -1560,6 +1610,14 @@ const firebaseConfig = {
                 <button onclick="addChecklistItem()" class="px-4 py-2 rounded-xl bg-strawberry text-white font-black shadow-stickerSm">新增</button>
               </div>
             </div>
+          </div>
+
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-bold text-cocoaLight">點擊各分類標題即可縮放（共 ${groups.length} 類）</span>
+            <button onclick="toggleAllChecklistGroups(${!allCollapsed})"
+              class="text-[11px] font-black px-3 py-1 rounded-full bg-white border-2 border-[#E8DFD1] text-cocoa hover:border-strawberry shadow-stickerSm active:scale-95 transition">
+              ${allCollapsed ? '📂 全部展開' : '📁 全部收合'}
+            </button>
           </div>
 
           ${groupsHtml}
