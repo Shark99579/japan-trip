@@ -193,6 +193,21 @@ const firebaseConfig = {
     const roomId = urlParams.get('id') || 'allen_moki_2026_v3';
     document.getElementById('room-label').textContent = `房間：${roomId}`;
 
+    // Checklist & Souvenir Categories (Split by City)
+    const CHECKLIST_CATEGORIES = [
+      "🍤 名古屋美食＆伴手禮",
+      "🦀 札幌美食＆伴手禮",
+      "🍰 小樽美食＆伴手禮",
+      "🦑 函館美食＆伴手禮",
+      "💊 名古屋必買藥妝",
+      "💊 札幌必買藥妝",
+      "💊 小樽必買藥妝",
+      "💊 函館必買藥妝",
+      "🎫 重要票券與證件",
+      "🧥 雪國洋蔥式穿搭",
+      "🧳 行李與 3C 備忘"
+    ];
+
     // Helper for HTML escaping inside inputs
     function escapeHtml(str) {
       if (!str) return '';
@@ -445,6 +460,10 @@ const firebaseConfig = {
         { id: "e1", title: "名古屋公費錢包初始存入（每人 ¥50,000）", amount: 0, currency: "JPY", pool: "public", payer: "憲聰", cat: "公費", date: "12/16" }
       ],
       checklist: [
+        { id: "s1", group: "🍤 名古屋美食＆伴手禮", text: "坂角總本舖 ゆかり 黃金蝦仙貝（名古屋名物）", done: false, url: "https://www.bankaku.co.jp/", img: "" },
+        { id: "s2", group: "🦀 札幌美食＆伴手禮", text: "六花亭 蘭姆葡萄奶油夾心餅乾（北海道必買）", done: false, url: "https://www.rokkatei.co.jp/", img: "" },
+        { id: "s3", group: "🍰 小樽美食＆伴手禮", text: "LeTAO 雙層起司蛋糕 ＆ 紅茶巧克力", done: false, url: "https://www.letao.jp/", img: "" },
+        { id: "s4", group: "🦑 函館美食＆伴手禮", text: "Pastry Snaffle's 函館輕乳酪起司蛋糕", done: false, url: "https://www.snaffles.jp/", img: "" },
         { id: "c1", group: "🎫 重要票券與證件", text: "護照（效期 6 個月以上）＆ Visit Japan Web QR Code", done: false, url: "", img: "" },
         { id: "c2", group: "🎫 重要票券與證件", text: "吉卜力公園大散步券 Premium 憑證（12/20 13:00 大倉庫）", done: false, url: "", img: "" },
         { id: "c3", group: "🎫 重要票券與證件", text: "WaySim 日本 eSIM 開通設定 ＆ 國泰產險海外旅平險", done: false, url: "", img: "" },
@@ -455,10 +474,7 @@ const firebaseConfig = {
         { id: "c8", group: "🧳 行李與 3C 備忘", text: "Day 3 早上把 2 咖大行李箱寄放利索爾，只背過夜包去高山", done: false, url: "", img: "" },
         { id: "c9", group: "🧳 行李與 3C 備忘", text: "Day 6 早上把 2 咖大行李箱寄放「名鐵金山站」大型置物櫃", done: false, url: "", img: "" },
         { id: "c10", group: "🧳 行李與 3C 備忘", text: "Day 11 提早 15 分鐘上札幌站月台，將 29 吋行李箱放入北斗號玄關行李架", done: false, url: "", img: "" },
-        { id: "c11", group: "🧳 行李與 3C 備忘", text: "行動電源（隨身登機勿托運）、保濕乳液與護唇膏", done: false, url: "", img: "" },
-        { id: "s1", group: "🛍️ 日本必買藥妝伴手禮", text: "六花亭 蘭姆葡萄奶油夾心餅乾（北海道必買）", done: false, url: "https://www.rokkatei.co.jp/", img: "" },
-        { id: "s2", group: "🛍️ 日本必買藥妝伴手禮", text: "Pastry Snaffle's 函館輕乳酪起司蛋糕", done: false, url: "https://www.snaffles.jp/", img: "" },
-        { id: "s3", group: "🛍️ 日本必買藥妝伴手禮", text: "坂角總本舖 ゆかり 黃金蝦仙貝（名古屋名物）", done: false, url: "https://www.bankaku.co.jp/", img: "" }
+        { id: "c11", group: "🧳 行李與 3C 備忘", text: "行動電源（隨身登機勿托運）、保濕乳液與護唇膏", done: false, url: "", img: "" }
       ]
     };
 
@@ -1026,6 +1042,9 @@ const firebaseConfig = {
 
       tempModalImgData = item.img || '';
       const isBase64 = tempModalImgData.startsWith('data:image');
+      const catOptions = CHECKLIST_CATEGORIES.includes(item.group)
+        ? CHECKLIST_CATEGORIES
+        : [item.group, ...CHECKLIST_CATEGORIES];
 
       const modal = document.getElementById('modal-backdrop');
       const box = document.getElementById('modal-box');
@@ -1038,12 +1057,7 @@ const firebaseConfig = {
           <div>
             <label class="block text-xs font-bold text-cocoaLight mb-1">分類</label>
             <select id="edit-check-group" class="w-full px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-white text-xs font-bold">
-              ${[
-                "🛍️ 日本必買藥妝伴手禮",
-                "🎫 重要票券與證件",
-                "🧥 雪國洋蔥式穿搭",
-                "🧳 行李與 3C 備忘"
-              ].map(g => `<option value="${g}" ${item.group === g ? 'selected' : ''}>${g}</option>`).join('')}
+              ${catOptions.map(g => `<option value="${escapeHtml(g)}" ${item.group === g ? 'selected' : ''}>${escapeHtml(g)}</option>`).join('')}
             </select>
           </div>
           <div>
@@ -1467,18 +1481,12 @@ const firebaseConfig = {
       `;
     }
 
-    // Render Checklist & Souvenir View (With Image & URL on each card)
+    // Render Checklist & Souvenir View (Split by City + Image & URL on each card)
     function renderChecklist() {
-      const preferredOrder = [
-        "🛍️ 日本必買藥妝伴手禮",
-        "🎫 重要票券與證件",
-        "🧥 雪國洋蔥式穿搭",
-        "🧳 行李與 3C 備忘"
-      ];
       const existingGroups = [...new Set(state.checklist.map(item => item.group))];
       const groups = [
-        ...preferredOrder.filter(g => existingGroups.includes(g)),
-        ...existingGroups.filter(g => !preferredOrder.includes(g))
+        ...CHECKLIST_CATEGORIES.filter(g => existingGroups.includes(g)),
+        ...existingGroups.filter(g => !CHECKLIST_CATEGORIES.includes(g))
       ];
       
       const groupsHtml = groups.map(g => {
@@ -1542,16 +1550,13 @@ const firebaseConfig = {
       return `
         <div class="space-y-4">
           <div class="bg-white border-2 border-[#E8DFD1] rounded-3xl p-4 shadow-sticker">
-            <h3 class="font-black text-sm text-cocoa mb-2">➕ 新增伴手禮 / 行李清單</h3>
+            <h3 class="font-black text-sm text-cocoa mb-2">➕ 新增伴手禮 / 藥妝 / 行李清單</h3>
             <div class="flex flex-col gap-2 text-xs">
               <select id="new-check-group" class="px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-cream font-bold">
-                <option value="🛍️ 日本必買藥妝伴手禮">🛍️ 日本必買藥妝伴手禮</option>
-                <option value="🎫 重要票券與證件">🎫 重要票券與證件</option>
-                <option value="🧥 雪國洋蔥式穿搭">🧥 雪國洋蔥式穿搭</option>
-                <option value="🧳 行李與 3C 備忘">🧳 行李與 3C 備忘</option>
+                ${CHECKLIST_CATEGORIES.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('')}
               </select>
               <div class="flex gap-2">
-                <input id="new-check-input" type="text" placeholder="輸入想買的伴手禮或攜帶物品..." class="flex-1 px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-cream focus:outline-none focus:border-strawberry">
+                <input id="new-check-input" type="text" placeholder="輸入想買的美食、藥妝或攜帶物品..." class="flex-1 px-3 py-2 rounded-xl border-2 border-[#E8DFD1] bg-cream focus:outline-none focus:border-strawberry">
                 <button onclick="addChecklistItem()" class="px-4 py-2 rounded-xl bg-strawberry text-white font-black shadow-stickerSm">新增</button>
               </div>
             </div>
